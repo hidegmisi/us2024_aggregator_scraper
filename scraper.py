@@ -55,12 +55,11 @@ def handle_error(e):
 def validate_data(data):
     for value in data.values():
         try:
-            if '%' not in value:
-                raise ValueError(f"Invalid percentage value: {value}")
+            if type(value) not in [int, float]:
+                raise ValueError(f"Invalid data type: {type(value)}")
             
-            percent = float(value.strip('%'))
-            if not 0 <= percent <= 100:
-                raise ValueError(f"Invalid percentage value: {percent}")
+            if not 0 <= value <= 1:
+                raise ValueError(f"Invalid percentage value: {value}")
         except ValueError as e:
             logging.warning(f"Validation error: {e}")
             return False
@@ -82,8 +81,8 @@ def load_cookies(driver, cookies):
     for cookie in cookies:
         driver.add_cookie(cookie)
 
-def convert_to_dict(data):
-    return { item.split()[0]: item.split()[1] for item in data }
+def convert_to_float_dict(data):
+    return { item.split()[0]: round(float(item.split()[1].replace('%', '')) / 100, 3) for item in data }
 
 def scrape_fivethirtyeight(url):
     try:
@@ -93,7 +92,7 @@ def scrape_fivethirtyeight(url):
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".label-group")))
             items = driver.find_element(By.CSS_SELECTOR, ".label-group").find_elements(By.TAG_NAME, "text")
             results = [item.text for item in items[:2]]
-            results = convert_to_dict(results)
+            results = convert_to_float_dict(results)
 
             return results if validate_data(results) else None
     except Exception as e:
@@ -111,7 +110,7 @@ def scrape_realclearpolling(url):
             )
             tds = driver.find_elements(By.TAG_NAME, "td")
             results = [f'Harris {tds[4].text}%', f'Trump {tds[5].text}%']
-            results = convert_to_dict(results)
+            results = convert_to_float_dict(results)
 
             return results if validate_data(results) else None
     except Exception as e:
@@ -151,7 +150,7 @@ def scrape_nyt(url):
             
             items = driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner")
             results = [clean_text(item.text) for item in items if 'Kennedy' not in item.text]
-            results = convert_to_dict(results)
+            results = convert_to_float_dict(results)
 
             return results if validate_data(results) else None
     except Exception as e:
@@ -173,7 +172,7 @@ def scrape_natesilver(url = "https://www.natesilver.net/p/nate-silver-2024-presi
                 clean_text = item.text.split(' ')[-1].replace("\n", " ")
                 results.append(clean_text)
             
-            results = convert_to_dict(results)
+            results = convert_to_float_dict(results)
             return results if validate_data(results) else None
     except Exception as e:
         handle_error(e)
