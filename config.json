@@ -1,0 +1,12 @@
+{
+    "urls": {
+        "fivethirtyeight": "https://projects.fivethirtyeight.com/polls/president-general/2024/national/",
+        "realclearpolling": "https://www.realclearpolling.com/polls/president/general/2024/trump-vs-harris-vs-kennedy-vs-stein-vs-west",
+        "nyt": "https://www.nytimes.com/interactive/2024/us/elections/polls-president.html",
+        "natesilver": "https://www.natesilver.net/p/nate-silver-2024-president-election-polls-model"
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "scraper.log"
+    }
+}
