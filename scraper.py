@@ -1,15 +1,14 @@
 import logging
 import json
+import base64
 import os
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 import pickle
 import pandas as pd
-import subprocess
 
 # Load configuration from config.json
 with open('config.json', 'r') as f:
@@ -18,7 +17,7 @@ with open('config.json', 'r') as f:
 # Set up logging
 logging.basicConfig(level=CONFIG['logging']['level'],
                     format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[logging.FileHandler(CONFIG['logging']['file']), logging.StreamHandler()])
+                    handlers=[logging.StreamHandler()])
 
 # Context manager for Selenium WebDriver
 class WebDriverContext:
@@ -28,6 +27,8 @@ class WebDriverContext:
     def __enter__(self):
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         self.driver = webdriver.Chrome(options=options)
         return self.driver
     
@@ -37,8 +38,7 @@ class WebDriverContext:
 
 # Centralized error handling
 def handle_error(e):
-    error_message = logging.error(f"An error occurred: {e}")
-    print(error_message)
+    logging.error(f"An error occurred: {e}")
 
 # Data validation function
 def validate_data(data):
@@ -54,9 +54,19 @@ def validate_data(data):
             return False
     return True
 
-def load_cookies(driver, cookies):
-    for cookie in cookies:
-        driver.add_cookie(cookie)
+def load_cookies(driver):
+    try:
+        encoded_cookies = os.getenv("NYT_COOKIES_BASE64")
+        if not encoded_cookies:
+            raise ValueError("NYT_COOKIES_BASE64 environment variable not set.")
+        
+        cookies = base64.b64decode(encoded_cookies)
+        cookies = pickle.loads(cookies)
+
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+    except Exception as e:
+        handle_error(e)
 
 def convert_to_float_dict(data):
     return { item.split()[0]: round(float(item.split()[1].replace('%', '')) / 100, 3) for item in data }
@@ -103,10 +113,7 @@ def scrape_nyt(url):
         with WebDriverContext() as driver:
             driver.get(url)
 
-            with open('nyt_cookies.pkl', "rb") as f:
-                cookies = pickle.load(f)
-
-            load_cookies(driver, cookies)
+            load_cookies(driver)
             driver.refresh()
             driver.get(url)
 
