@@ -1,9 +1,9 @@
-name: Run Scraper
+name: Run Scraper Every 6 Hours
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # This cron expression runs the workflow every 6 hours
-  workflow_dispatch:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   run-script:
@@ -33,12 +33,10 @@ jobs:
         git config --local user.name "github-actions[bot]"
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Commit changes
-      run: |
-        git add polls.csv
-        git commit -m "Update polls.csv with new data"
-
-    - name: Push changes
-      uses: ad-m/github-push-action@v1
+    - name: Commit and Push changes
+      uses: github-actions-x/commit@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        commit_message: "Update polls.csv with new data"
+        branch: ${{ github.ref }}
+        files: "polls.csv"
