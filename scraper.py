@@ -190,7 +190,7 @@ def main():
 
     df = pd.DataFrame(averages)
 
-    df['date'] = pd.Timestamp.now().strftime('%Y-%m-%d')
+    df['date'] = get_hungarian_time().strftime('%Y-%m-%d')
     df['candidate'] = df.index
     df = df.set_index('date')
     df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver']]
