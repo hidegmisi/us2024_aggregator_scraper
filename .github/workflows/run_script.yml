@@ -8,6 +8,8 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    env:
+      NYT_COOKIES_BASE64: ${{ secrets.NYT_COOKIES_BASE64 }}
 
     steps:
     - name: Checkout repository
