@@ -1,4 +1,4 @@
-name: Run Scraper Every 6 Hours
+name: Run Scraper
 
 on:
   schedule:
@@ -27,3 +27,18 @@ jobs:
 
     - name: Run Python Script
       run: python scraper.py
+
+    - name: Configure Git
+      run: |
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Commit changes
+      run: |
+        git add polls.csv
+        git commit -m "Update polls.csv with new data"
+
+    - name: Push changes
+      uses: ad-m/github-push-action@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
