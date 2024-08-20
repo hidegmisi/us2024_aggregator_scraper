@@ -35,21 +35,10 @@ class WebDriverContext:
         if self.driver:
             self.driver.quit()
 
-# Function to send desktop notifications
-def send_notification(title, message, is_error=False):
-    if is_error:
-        os.system(f'''
-            osascript -e 'display dialog "FIX IT." with title "{title}" buttons {{"Oh-oh!"}} with icon caution'
-        ''')
-    os.system(f'''
-        osascript -e 'display notification "{message}" with title "{title}"'
-    ''')
-
 # Centralized error handling
 def handle_error(e):
     error_message = logging.error(f"An error occurred: {e}")
     print(error_message)
-    send_notification("Polling Scraper Error", error_message, is_error=True)
 
 # Data validation function
 def validate_data(data):
@@ -64,18 +53,6 @@ def validate_data(data):
             logging.warning(f"Validation error: {e}")
             return False
     return True
-
-# Function to backup data to GitHub
-def backup_data_to_github():
-    try:
-        subprocess.run(["git", "add", "polls.csv"], check=True)
-        subprocess.run(["git", "commit", "-m", "Automated backup"], check=True)
-        subprocess.run(["git", "push"], check=True)
-        logging.info("Data successfully backed up to GitHub.")
-        send_notification("Polling Scraper", "Data successfully backed up to GitHub.")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to backup data to GitHub: {e}")
-        send_notification("Polling Scraper Error", f"Failed to backup data to GitHub: {e}", is_error=True)
 
 def load_cookies(driver, cookies):
     for cookie in cookies:
@@ -205,9 +182,6 @@ def main():
     df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver']]
     df['created_time'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
     df.to_csv('polls.csv', mode='a', header=False)
-
-    backup_data_to_github()
-
 
 if __name__ == '__main__':
     main()

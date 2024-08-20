@@ -1,5 +1,2 @@
-logging
-json
-os
 selenium
 pandas
