@@ -9,6 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import pickle
 import pandas as pd
+import pytz
+from datetime import datetime
 
 # Load configuration from config.json
 with open('config.json', 'r') as f:
@@ -18,6 +20,11 @@ with open('config.json', 'r') as f:
 logging.basicConfig(level=CONFIG['logging']['level'],
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[logging.StreamHandler()])
+
+# Function to get current Hungarian time
+def get_hungarian_time():
+    hungary_tz = pytz.timezone('Europe/Budapest')
+    return datetime.now(hungary_tz)
 
 # Context manager for Selenium WebDriver
 class WebDriverContext:
@@ -187,7 +194,7 @@ def main():
     df['candidate'] = df.index
     df = df.set_index('date')
     df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver']]
-    df['created_time'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+    df['created_time'] = get_hungarian_time().strftime('%Y-%m-%d')
     df.to_csv('polls.csv', mode='a', header=False)
 
 if __name__ == '__main__':
