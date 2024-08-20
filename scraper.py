@@ -194,7 +194,7 @@ def main():
     df['candidate'] = df.index
     df = df.set_index('date')
     df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver']]
-    df['created_time'] = get_hungarian_time().strftime('%Y-%m-%d')
+    df['created_time'] = get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S')
     df.to_csv('polls.csv', mode='a', header=False)
 
 if __name__ == '__main__':
