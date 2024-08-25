@@ -61,11 +61,11 @@ def validate_data(data):
             return False
     return True
 
-def load_cookies(driver):
+def load_cookies(driver, cookies):
     try:
-        encoded_cookies = os.getenv("NYT_COOKIES_BASE64")
+        encoded_cookies = os.getenv(f"{cookies}")
         if not encoded_cookies:
-            raise ValueError("NYT_COOKIES_BASE64 environment variable not set.")
+            raise ValueError(f"{cookies} environment variable not set.")
         
         cookies = base64.b64decode(encoded_cookies)
         cookies = pickle.loads(cookies)
@@ -120,14 +120,14 @@ def scrape_nyt(url):
         with WebDriverContext() as driver:
             driver.get(url)
 
-            load_cookies(driver)
+            load_cookies(driver, "NYT_COOKIES_BASE64")
             driver.refresh()
             driver.get(url)
 
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#summaryharris .multi-buttons")))
 
             actions = ActionChains(driver)
-            button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#summaryharris .multi-buttons button:nth-child(2)")))
+            button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#summaryharris .multi-buttons button:nth-child(1)")))
             
             actions.move_to_element(button)
             actions.click()
@@ -169,6 +169,30 @@ def scrape_natesilver(url = "https://www.natesilver.net/p/nate-silver-2024-presi
         handle_error(e)
         return None
     
+def scrape_economist(url):
+    try:
+        with WebDriverContext() as driver:
+            driver.get(url)
+
+            load_cookies(driver, "ECONOMIST_COOKIES_BASE64")
+            driver.refresh()
+            driver.get(url)
+
+            WebDriverWait(driver, 30).until(
+                lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")) == 2
+            )
+            
+            items = driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner")
+            results = []
+            results.append(f'Harris {items[0].text}%')
+            results.append(f'Trump {items[1].text}%')
+            results = convert_to_float_dict(results)
+
+            return results if validate_data(results) else None
+    except Exception as e:
+        handle_error(e)
+        return None
+    
 def main():
     urls = CONFIG['urls']
 
@@ -177,6 +201,7 @@ def main():
         'realclearpolling': scrape_realclearpolling,
         'nyt': scrape_nyt,
         'natesilver': scrape_natesilver,
+        'economist': scrape_economist,
     }
 
     averages = {}
@@ -193,7 +218,7 @@ def main():
     df['date'] = get_hungarian_time().strftime('%Y-%m-%d')
     df['candidate'] = df.index
     df = df.set_index('date')
-    df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver']]
+    df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver', 'economist']]
     df['created_time'] = get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S')
     df.to_csv('polls.csv', mode='a', header=False)
 
