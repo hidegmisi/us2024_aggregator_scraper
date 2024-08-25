@@ -135,7 +135,7 @@ def scrape_nyt(url):
             
             WebDriverWait(driver, 30).until(
                 lambda driver:
-                    len(driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner .g-value")) == 3 and
+                    len(driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner .g-value")) == 2 and
                     all([len(item.text.strip()) for item in driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner .g-value")])
             )
             
@@ -182,7 +182,7 @@ def scrape_economist(url):
                 lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")) == 2
             )
             
-            items = driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner")
+            items = driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")
             results = []
             results.append(f'Harris {items[0].text}%')
             results.append(f'Trump {items[1].text}%')
