@@ -29,8 +29,13 @@ jobs:
     - name: Run Python Script
       run: python scraper.py
 
+    - name: Run Aggregator Script
+      run: python aggregator.py
+
     - name: Commit and Push changes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: "Update polls.csv with new data"
-        file_pattern: polls.csv
+        commit_message: "Update scrape_history and daily_aggregates with new data"
+        file_pattern: |
+          scrape_history.csv
+          daily_aggregates.csv

@@ -2,6 +2,7 @@ import logging
 import json
 import base64
 import os
+import numpy as np
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -119,19 +120,6 @@ def scrape_nyt(url):
     try:
         with WebDriverContext() as driver:
             driver.get(url)
-
-            load_cookies(driver, "NYT_COOKIES_BASE64")
-            driver.refresh()
-            driver.get(url)
-
-            WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#summaryharris .multi-buttons")))
-
-            actions = ActionChains(driver)
-            button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#summaryharris .multi-buttons button:nth-child(1)")))
-            
-            actions.move_to_element(button)
-            actions.click()
-            actions.perform()
             
             WebDriverWait(driver, 30).until(
                 lambda driver:
@@ -140,7 +128,7 @@ def scrape_nyt(url):
             )
             
             items = driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner")
-            results = [clean_text(item.text) for item in items if 'Kennedy' not in item.text]
+            results = [clean_text(item.text) for item in items]
             results = convert_to_float_dict(results)
 
             return results if validate_data(results) else None
@@ -179,7 +167,7 @@ def scrape_economist(url):
             driver.get(url)
 
             WebDriverWait(driver, 30).until(
-                lambda driver: len(driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")) == 2
+                lambda driver: all([el.text for el in driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")])
             )
             
             items = driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")
@@ -197,30 +185,52 @@ def main():
     urls = CONFIG['urls']
 
     AGGREGATOR_MAP = {
-        'fivethirtyeight': scrape_fivethirtyeight,
-        'realclearpolling': scrape_realclearpolling,
-        'nyt': scrape_nyt,
-        'natesilver': scrape_natesilver,
-        'economist': scrape_economist,
+        '538': scrape_fivethirtyeight,
+        'RCP': scrape_realclearpolling,
+        'NYT': scrape_nyt,
+        'NS': scrape_natesilver,
+        'Economist': scrape_economist,
     }
 
-    averages = {}
     for aggregator, scraper in AGGREGATOR_MAP.items():
         url = urls.get(aggregator)
-        data = scraper(url)
+        error_text = np.NaN
+        data = None
+
+        try:
+            for i in range(10):
+                data = scraper(url)
+                if data:
+                    if i > 0:
+                        error_text = f"Success after {i} retries"
+                    break
+        except Exception as e:
+            handle_error(e)
+            error_text = f"Failed to scrape {aggregator} after 10 retries"
+
         if data:
-            averages[aggregator] = data
+            for candidate, value in data.items():
+                df = pd.DataFrame({
+                    'date': get_hungarian_time().strftime('%Y-%m-%d'),
+                    'aggregator': aggregator,
+                    'candidate': candidate,
+                    'value': value,
+                    'date_added': get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S'),
+                    'error': error_text
+                }, index=[0])
+                df.to_csv('polls.csv', mode='a', header=False, index=False)
         else:
+            for candidate in ['Harris', 'Trump']:
+                df = pd.DataFrame({
+                    'date': get_hungarian_time().strftime('%Y-%m-%d'),
+                    'aggregator': aggregator,
+                    'candidate': candidate,
+                    'value': np.NaN,
+                    'date_added': get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S'),
+                    'error': error_text
+                }, index=[0])
+                df.to_csv('polls.csv', mode='a', header=False, index=False)
             logging.warning(f"Failed to scrape data from {aggregator}")
-
-    df = pd.DataFrame(averages)
-
-    df['date'] = get_hungarian_time().strftime('%Y-%m-%d')
-    df['candidate'] = df.index
-    df = df.set_index('date')
-    df = df[['candidate', 'fivethirtyeight', 'realclearpolling', 'nyt', 'natesilver', 'economist']]
-    df['created_time'] = get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S')
-    df.to_csv('polls.csv', mode='a', header=False)
 
 if __name__ == '__main__':
     main()
