@@ -2,7 +2,6 @@ import logging
 import json
 import base64
 import os
-from turtle import update
 import numpy as np
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -158,7 +157,7 @@ def scrape_natesilver(url = "https://www.natesilver.net/p/nate-silver-2024-presi
                 clean_text = item.text.split(' ')[-1].replace("\n", " ")
                 results.append(clean_text)
             
-            results = {'date': pd.Timestamp(get_hungarian_time()), 'values': convert_to_float_dict(results)}
+            results = {'date': pd.Timestamp(get_hungarian_time()), 'values': convert_to_float_dict(results)} # This is always up to date
             return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
@@ -174,19 +173,20 @@ def scrape_economist(url):
             driver.get(url)
 
             WebDriverWait(driver, 30).until(
-                lambda driver: all([el.text for el in driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")])
+                lambda driver: all([el.text.strip() for el in driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")])
             )
-            WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".headerContent .date")))
-            
-            date_el = driver.find_element(By.CSS_SELECTOR, ".headerContent .date")
-            update_date = date_el.text.strip().replace('Last updated on ', '')
+            WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".layercake-container svg:last-of-type g g:last-of-type .line-tooltip-label")))
 
-            items = driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")
+            date_el = driver.find_element(By.CSS_SELECTOR, ".layercake-container").find_element(By.CSS_SELECTOR, "svg:last-of-type g g:last-of-type .line-tooltip-label")
+            update_date = '2024 ' + date_el.text.strip()
+
+            items = driver.execute_script(
+                "return [...document.querySelectorAll('text.svelte-onujtp.median')].map(el => el.textContent.trim());"
+            )
             results = []
-            results.append(f'Harris {items[0].text}%')
-            results.append(f'Trump {items[1].text}%')
-            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)} # This is always up to date
-
+            results.append(f'Harris {items[0]}%')
+            results.append(f'Trump {items[1]}%')
+            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)}
             return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
