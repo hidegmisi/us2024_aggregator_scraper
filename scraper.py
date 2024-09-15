@@ -2,6 +2,7 @@ import logging
 import json
 import base64
 import os
+from turtle import update
 import numpy as np
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -23,9 +24,12 @@ logging.basicConfig(level=CONFIG['logging']['level'],
                     handlers=[logging.StreamHandler()])
 
 # Function to get current Hungarian time
-def get_hungarian_time():
+def get_hungarian_time(date: pd.Timestamp = None) -> pd.Timestamp:
     hungary_tz = pytz.timezone('Europe/Budapest')
-    return datetime.now(hungary_tz)
+    if date:
+        return date.astimezone(hungary_tz)
+    else:
+        return datetime.now(hungary_tz)
 
 # Context manager for Selenium WebDriver
 class WebDriverContext:
@@ -85,11 +89,13 @@ def scrape_fivethirtyeight(url):
             driver.get(url)
 
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".label-group")))
+            date_el = driver.find_element(By.CSS_SELECTOR, ".hover-date-fg")
+            update_date = " ".join(date_el.text.strip().split(' ')[:-1])
             items = driver.find_element(By.CSS_SELECTOR, ".label-group").find_elements(By.TAG_NAME, "text")
             results = [item.text for item in items[:2]]
-            results = convert_to_float_dict(results)
+            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)}
 
-            return results if validate_data(results) else None
+            return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
         return None
@@ -104,10 +110,11 @@ def scrape_realclearpolling(url):
                 (lambda d: len(d.find_elements(By.TAG_NAME, "td")) > 5)
             )
             tds = driver.find_elements(By.TAG_NAME, "td")
+            update_date = '2024/' + tds[1].text.split(' - ')[1]
             results = [f'Harris {tds[4].text}%', f'Trump {tds[5].text}%']
-            results = convert_to_float_dict(results)
+            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)}
 
-            return results if validate_data(results) else None
+            return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
         return None
@@ -126,12 +133,15 @@ def scrape_nyt(url):
                     len(driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner .g-value")) == 2 and
                     all([len(item.text.strip()) for item in driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner .g-value")])
             )
+
+            date_el = driver.find_element(By.CSS_SELECTOR, "#summaryharris .timeseries-marker-label")
+            update_date = '2024 ' + date_el.text.strip()
             
             items = driver.find_elements(By.CSS_SELECTOR, "#summaryharris .primary-matchup .g-endlabel-inner")
             results = [clean_text(item.text) for item in items]
-            results = convert_to_float_dict(results)
+            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)}
 
-            return results if validate_data(results) else None
+            return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
         return None
@@ -151,8 +161,8 @@ def scrape_natesilver(url = "https://www.natesilver.net/p/nate-silver-2024-presi
                 clean_text = item.text.split(' ')[-1].replace("\n", " ")
                 results.append(clean_text)
             
-            results = convert_to_float_dict(results)
-            return results if validate_data(results) else None
+            results = {'date': pd.Timestamp(), 'values': convert_to_float_dict(results)} # This is always up to date
+            return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
         return None
@@ -169,14 +179,18 @@ def scrape_economist(url):
             WebDriverWait(driver, 30).until(
                 lambda driver: all([el.text for el in driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")])
             )
+            WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".headerContent .date")))
             
+            date_el = driver.find_element(By.CSS_SELECTOR, ".headerContent .date")
+            update_date = date_el.text.strip().replace('Last updated on ', '')
+
             items = driver.find_elements(By.CSS_SELECTOR, "text.svelte-onujtp.median")
             results = []
             results.append(f'Harris {items[0].text}%')
             results.append(f'Trump {items[1].text}%')
-            results = convert_to_float_dict(results)
+            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)} # This is always up to date
 
-            return results if validate_data(results) else None
+            return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
         return None
@@ -209,9 +223,11 @@ def main():
             error_text = f"Failed to scrape {aggregator} after 10 retries"
 
         if data:
-            for candidate, value in data.items():
+            update_date = data['date']
+            for candidate, value in data['values'].items():
+                candidate, value
                 df = pd.DataFrame({
-                    'date': get_hungarian_time().strftime('%Y-%m-%d'),
+                    'date': get_hungarian_time(update_date).strftime('%Y-%m-%d'),
                     'aggregator': aggregator,
                     'candidate': candidate,
                     'value': value,
@@ -222,7 +238,7 @@ def main():
         else:
             for candidate in ['Harris', 'Trump']:
                 df = pd.DataFrame({
-                    'date': get_hungarian_time().strftime('%Y-%m-%d'),
+                    'date': get_hungarian_time(update_date).strftime('%Y-%m-%d'),
                     'aggregator': aggregator,
                     'candidate': candidate,
                     'value': np.nan,
