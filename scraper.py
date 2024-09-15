@@ -24,12 +24,9 @@ logging.basicConfig(level=CONFIG['logging']['level'],
                     handlers=[logging.StreamHandler()])
 
 # Function to get current Hungarian time
-def get_hungarian_time(date: pd.Timestamp = None) -> pd.Timestamp:
+def get_hungarian_time():
     hungary_tz = pytz.timezone('Europe/Budapest')
-    if date:
-        return date.tz_convert(hungary_tz)
-    else:
-        return datetime.now(hungary_tz)
+    return datetime.now(hungary_tz)
 
 # Context manager for Selenium WebDriver
 class WebDriverContext:
@@ -161,7 +158,7 @@ def scrape_natesilver(url = "https://www.natesilver.net/p/nate-silver-2024-presi
                 clean_text = item.text.split(' ')[-1].replace("\n", " ")
                 results.append(clean_text)
             
-            results = {'date': pd.Timestamp(), 'values': convert_to_float_dict(results)} # This is always up to date
+            results = {'date': pd.Timestamp(get_hungarian_time()), 'values': convert_to_float_dict(results)}
             return results if validate_data(results['values']) else None
     except Exception as e:
         handle_error(e)
