@@ -235,7 +235,7 @@ def main():
         else:
             for candidate in ['Harris', 'Trump']:
                 df = pd.DataFrame({
-                    'date': update_date.strftime('%Y-%m-%d'),
+                    'date': np.nan,
                     'aggregator': aggregator,
                     'candidate': candidate,
                     'value': np.nan,
