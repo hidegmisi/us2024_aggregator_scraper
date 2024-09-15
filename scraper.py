@@ -106,9 +106,8 @@ def scrape_realclearpolling(url):
                 (lambda d: len(d.find_elements(By.TAG_NAME, "td")) > 5)
             )
             tds = driver.find_elements(By.TAG_NAME, "td")
-            update_date = '2024/' + tds[1].text.split(' - ')[1]
             results = [f'Harris {tds[4].text}%', f'Trump {tds[5].text}%']
-            results = {'date': pd.Timestamp(update_date), 'values': convert_to_float_dict(results)}
+            results = {'date': pd.Timestamp(get_hungarian_time()), 'values': convert_to_float_dict(results)} # This is always up to date
 
             return results if validate_data(results['values']) else None
     except Exception as e:
