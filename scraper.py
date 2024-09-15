@@ -194,7 +194,7 @@ def main():
 
     for aggregator, scraper in AGGREGATOR_MAP.items():
         url = urls.get(aggregator)
-        error_text = np.NaN
+        error_text = np.nan
         data = None
 
         try:
@@ -225,7 +225,7 @@ def main():
                     'date': get_hungarian_time().strftime('%Y-%m-%d'),
                     'aggregator': aggregator,
                     'candidate': candidate,
-                    'value': np.NaN,
+                    'value': np.nan,
                     'date_added': get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S'),
                     'error': error_text
                 }, index=[0])
