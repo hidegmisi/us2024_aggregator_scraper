@@ -27,7 +27,7 @@ logging.basicConfig(level=CONFIG['logging']['level'],
 def get_hungarian_time(date: pd.Timestamp = None) -> pd.Timestamp:
     hungary_tz = pytz.timezone('Europe/Budapest')
     if date:
-        return date.astimezone(hungary_tz)
+        return date.tz_convert(hungary_tz)
     else:
         return datetime.now(hungary_tz)
 
