@@ -218,7 +218,7 @@ def main():
                     'date_added': get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S'),
                     'error': error_text
                 }, index=[0])
-                df.to_csv('polls.csv', mode='a', header=False, index=False)
+                df.to_csv('scrape_history.csv', mode='a', header=False, index=False)
         else:
             for candidate in ['Harris', 'Trump']:
                 df = pd.DataFrame({
@@ -229,7 +229,7 @@ def main():
                     'date_added': get_hungarian_time().strftime('%Y-%m-%d %H:%M:%S'),
                     'error': error_text
                 }, index=[0])
-                df.to_csv('polls.csv', mode='a', header=False, index=False)
+                df.to_csv('scrape_history.csv', mode='a', header=False, index=False)
             logging.warning(f"Failed to scrape data from {aggregator}")
 
 if __name__ == '__main__':
