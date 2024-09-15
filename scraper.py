@@ -227,7 +227,7 @@ def main():
             for candidate, value in data['values'].items():
                 candidate, value
                 df = pd.DataFrame({
-                    'date': get_hungarian_time(update_date).strftime('%Y-%m-%d'),
+                    'date': update_date.strftime('%Y-%m-%d'),
                     'aggregator': aggregator,
                     'candidate': candidate,
                     'value': value,
@@ -238,7 +238,7 @@ def main():
         else:
             for candidate in ['Harris', 'Trump']:
                 df = pd.DataFrame({
-                    'date': get_hungarian_time(update_date).strftime('%Y-%m-%d'),
+                    'date': update_date.strftime('%Y-%m-%d'),
                     'aggregator': aggregator,
                     'candidate': candidate,
                     'value': np.nan,
