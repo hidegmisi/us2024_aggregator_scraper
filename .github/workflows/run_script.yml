@@ -36,6 +36,5 @@ jobs:
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: "Update scrape_history and daily_aggregates with new data"
-        file_pattern: |
-          scrape_history.csv
-          daily_aggregates.csv
+        file_pattern: '*.csv'
+        disable_globbing: true
