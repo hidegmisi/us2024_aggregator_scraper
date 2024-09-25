@@ -755,7 +755,9 @@ date,aggregator,candidate,value
 2024-09-23,NYT,Trump,0.47
 2024-09-23,RCP,Harris,0.494
 2024-09-23,RCP,Trump,0.472
-2024-09-23,Average,Harris,0.492
+2024-09-23,Economist,Harris,0.501
+2024-09-23,Economist,Trump,0.466
+2024-09-23,Average,Harris,0.493
 2024-09-23,Average,Trump,0.465
 2024-09-24,538,Harris,0.483
 2024-09-24,538,Trump,0.458
