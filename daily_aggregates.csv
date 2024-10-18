@@ -1019,8 +1019,10 @@ date,aggregator,candidate,value
 2024-10-16,NYT,Trump,0.47
 2024-10-16,RCP,Harris,0.49
 2024-10-16,RCP,Trump,0.474
-2024-10-16,Average,Harris,0.49
-2024-10-16,Average,Trump,0.468
+2024-10-16,Economist,Harris,0.495
+2024-10-16,Economist,Trump,0.466
+2024-10-16,Average,Harris,0.491
+2024-10-16,Average,Trump,0.467
 2024-10-17,538,Harris,0.485
 2024-10-17,538,Trump,0.461
 2024-10-17,NS,Harris,0.492
@@ -1030,12 +1032,12 @@ date,aggregator,candidate,value
 2024-10-17,RCP,Harris,0.493
 2024-10-17,RCP,Trump,0.477
 2024-10-17,Average,Harris,0.49
-2024-10-17,Average,Trump,0.469
+2024-10-17,Average,Trump,0.468
 2024-10-18,NS,Harris,0.491
 2024-10-18,NS,Trump,0.466
 2024-10-18,NYT,Harris,0.49
 2024-10-18,NYT,Trump,0.47
-2024-10-18,RCP,Harris,0.492
+2024-10-18,RCP,Harris,0.493
 2024-10-18,RCP,Trump,0.477
 2024-10-18,Average,Harris,0.491
 2024-10-18,Average,Trump,0.471
